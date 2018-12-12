@@ -19,6 +19,7 @@ package com.samsungxr.animation;
 import com.samsungxr.SXRBehavior;
 import com.samsungxr.SXRContext;
 import com.samsungxr.SXRNode;
+import com.samsungxr.animation.keyframe.SXRSkeletonAnimation;
 import com.samsungxr.utility.Log;
 
 import java.util.ArrayList;
@@ -47,7 +48,10 @@ public class SXRAnimator extends SXRBehavior
     protected boolean mAutoStart;
     protected boolean mIsRunning;
     protected String mName;
-
+    SXRNode animModel= null;
+    SXRAvatar animAvatar = null;
+    private String          mBoneMap;
+    private int numberofInterp = 0;
     /**
      * Make an instance of the SXRAnimator component.
      * Auto-start is not enabled - a call to start() is
@@ -281,7 +285,12 @@ public class SXRAnimator extends SXRBehavior
             anim.setRepeatCount(repeatCount);
         }
     }
-
+    public void sendAvatar(SXRNode model, SXRAvatar avatar, String bonemap)
+    {
+        animModel = model;
+        animAvatar = avatar;
+        mBoneMap = bonemap;
+    }
     /**
      * Starts all of the animations in this animator.
      * @see SXRAnimator#reset()
@@ -298,6 +307,104 @@ public class SXRAnimator extends SXRBehavior
         {
             anim.start(getSXRContext().getAnimationEngine());
         }
+    }
+
+    public void start(float blendFactor)
+    {
+        if (mAnimations.size() == 0)
+        {
+            return;
+        }
+        mIsRunning = true;
+        int tempAnimSze = mAnimations.size();
+
+        for(int i=0;i<(tempAnimSze)-2;i=i+2)
+        {
+
+            SXRSkeletonAnimation skelOne = (SXRSkeletonAnimation)mAnimations.get(i);
+
+            SXRSkeletonAnimation skelTwo = (SXRSkeletonAnimation)mAnimations.get(i+2);
+
+            SXRPoseInterpolator blendAnim = new SXRPoseInterpolator(animModel, blendFactor, skelOne, skelTwo, skelOne.getSkeleton());
+
+            SXRPoseMapper retargeterP = new SXRPoseMapper(animAvatar.getSkeleton(), skelOne.getSkeleton(), blendFactor);
+
+            retargeterP.setBoneMap(mBoneMap);
+
+            mAnimations.add(blendAnim);
+            mAnimations.add(retargeterP);
+            numberofInterp++;
+
+        }
+
+        int animSize = mAnimations.size();
+
+        int skelAnimSize = animSize-(numberofInterp*2);
+        int incr = 0;
+        for(int j=0;j<(animSize);j=j+4)
+        {
+
+            if(j==0)
+            {
+                mAnimations.get(j).setID(j);
+
+                mAnimations.get(j+1).setID(j+1);
+
+                SXRSkeletonAnimation skelset = (SXRSkeletonAnimation)mAnimations.get(0);
+                skelset.setblendFactor(blendFactor);
+
+                skelset.setSkelReturn("first");
+
+            }
+            else
+            {
+
+                mAnimations.get(incr).setID(j);
+                mAnimations.get(incr+1).setID(j+1);
+
+                SXRSkeletonAnimation skelsetT = (SXRSkeletonAnimation)mAnimations.get(2);
+                skelsetT.setblendFactor(blendFactor);
+
+                if(j!=(animSize-2))
+                {
+                    skelsetT.setSkelReturn("middle");
+                }
+                else
+                {
+                    skelsetT.setSkelReturn("last");
+                }
+
+            }
+            incr = incr+2;
+        }
+        int mAnim = animSize-(2*numberofInterp);
+        for(int k=0;k<(numberofInterp*4); k=k+4)
+        {
+
+            mAnimations.get(mAnim).setID(k+2);
+            mAnimations.get(mAnim+1).setID(k+3);
+            //Log.i("getanimationsID","v "+mAnim+" id "+mAnimations.get(mAnim).getID());
+            mAnimations.get(mAnim).setRepeatMode(SXRRepeatMode.REPEATED);
+            mAnimations.get(mAnim+1).setRepeatMode(SXRRepeatMode.REPEATED);
+
+            mAnimations.get(mAnim).setRepeatCount(-1);
+            mAnimations.get(mAnim+1).setRepeatCount(-1);
+            mAnim = mAnim+2;
+
+
+
+        }
+
+        mAnimations.get(0).setSize(mAnimations.size());
+        mAnimations.get(0).setFlag(mAnimations.size());
+
+        for(int k=0;k<mAnimations.size(); k++) {
+            // Log.i("printnameandID","print "+ mAnimations.get(k).getName()+" id "+ mAnimations.get(k).getID()+" name "+mAnimations.get(k).getClass().getName());
+            mAnimations.get(k).setDur(blendFactor);
+            mAnimations.get(k).start(getSXRContext().getAnimationEngine());
+        }
+
+
     }
 
     /**

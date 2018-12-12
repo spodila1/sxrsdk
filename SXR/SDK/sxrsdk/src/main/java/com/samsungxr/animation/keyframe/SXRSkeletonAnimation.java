@@ -51,6 +51,7 @@ import java.util.List;
 public class SXRSkeletonAnimation extends SXRAnimation implements PrettyPrint {
     protected String mName;
     private SXRSkeleton mSkeleton = null;
+    private float blendFactor=0;
 
     /**
      * List of animation channels for each of the
@@ -67,7 +68,7 @@ public class SXRSkeletonAnimation extends SXRAnimation implements PrettyPrint {
      */
     public SXRSkeletonAnimation(String name, SXRNode target, float duration)
     {
-    	super(target, duration);
+        super(target, duration);
         mName = name;
     }
 
@@ -198,12 +199,31 @@ public class SXRSkeletonAnimation extends SXRAnimation implements PrettyPrint {
     {
         mTarget = target;
         if ((mSkeleton != null) &&
-            target.getComponent(SXRSkeleton.getComponentType()) == null)
+                target.getComponent(SXRSkeleton.getComponentType()) == null)
         {
             target.attachComponent(mSkeleton);
         }
     }
-
+    ////blendingANim///////
+    public void setblendFactor(float blendFac)
+    {
+        blendFactor=blendFac;
+    }
+    private String setsKelRet = "";
+    boolean setReturn = false;
+    public void setSkelReturn(String setOrder)
+    {
+        setsKelRet = setOrder;
+    }
+    public String getSkelReturn()
+    {
+        return setsKelRet;
+    }
+    public void setReturn(boolean setR)
+    {
+        setReturn = setR;
+    }
+    ////blendingANim///////
     @Override
     protected void animate(SXRHybridObject target, float ratio)
     {
@@ -216,6 +236,31 @@ public class SXRSkeletonAnimation extends SXRAnimation implements PrettyPrint {
      */
     public void animate(float timeInSec)
     {
+        switch(this.setsKelRet)
+        {
+            case "first":
+                // Log.i("printLasttime","skel "+(timeInSec));
+                if(setReturn)//(timeInSec>(this.getDuration()-blendFactor)))
+                {
+                    return;
+                }
+                break;
+            case "middle":
+                // if((0<timeInSec)&&(timeInSec<blendFactor)&&(timeInSec>(this.getDuration()-blendFactor)))
+                if(setReturn)
+                {
+                    return;
+                }
+                break;
+            case "last":
+                if(setReturn)
+                {
+
+                    return;
+                }
+                break;
+
+        }
         SXRSkeleton skel = getSkeleton();
         SXRPose pose = skel.getPose();
         computePose(timeInSec,pose);
@@ -248,7 +293,7 @@ public class SXRSkeletonAnimation extends SXRAnimation implements PrettyPrint {
             }
         }
 
-     return pose;
+        return pose;
     }
     @Override
     public void prettyPrint(StringBuffer sb, int indent) {
