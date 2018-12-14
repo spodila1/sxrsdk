@@ -51,7 +51,6 @@ import java.util.List;
 public class SXRSkeletonAnimation extends SXRAnimation implements PrettyPrint {
     protected String mName;
     private SXRSkeleton mSkeleton = null;
-    private float blendFactor=0;
 
     /**
      * List of animation channels for each of the
@@ -204,26 +203,23 @@ public class SXRSkeletonAnimation extends SXRAnimation implements PrettyPrint {
             target.attachComponent(mSkeleton);
         }
     }
-    ////blendingANim///////
-    public void setblendFactor(float blendFac)
+
+    private String skelOrder = "";
+    boolean updatePose = false;
+    public void setSkelOrder(String order)
     {
-        blendFactor=blendFac;
+        skelOrder = order;
     }
-    private String setsKelRet = "";
-    boolean setReturn = false;
-    public void setSkelReturn(String setOrder)
+    public String getSkelOrder()
     {
-        setsKelRet = setOrder;
+        return skelOrder;
     }
-    public String getSkelReturn()
+
+    public void setUpdatePose(boolean setFlag)
     {
-        return setsKelRet;
+        updatePose = setFlag;
     }
-    public void setReturn(boolean setR)
-    {
-        setReturn = setR;
-    }
-    ////blendingANim///////
+
     @Override
     protected void animate(SXRHybridObject target, float ratio)
     {
@@ -236,31 +232,28 @@ public class SXRSkeletonAnimation extends SXRAnimation implements PrettyPrint {
      */
     public void animate(float timeInSec)
     {
-        switch(this.setsKelRet)
+        switch(this.skelOrder)
         {
             case "first":
-                // Log.i("printLasttime","skel "+(timeInSec));
-                if(setReturn)//(timeInSec>(this.getDuration()-blendFactor)))
+                if(updatePose)
                 {
                     return;
                 }
                 break;
             case "middle":
-                // if((0<timeInSec)&&(timeInSec<blendFactor)&&(timeInSec>(this.getDuration()-blendFactor)))
-                if(setReturn)
+                if(updatePose)
                 {
                     return;
                 }
                 break;
             case "last":
-                if(setReturn)
+                if(updatePose)
                 {
-
                     return;
                 }
                 break;
-
         }
+
         SXRSkeleton skel = getSkeleton();
         SXRPose pose = skel.getPose();
         computePose(timeInSec,pose);

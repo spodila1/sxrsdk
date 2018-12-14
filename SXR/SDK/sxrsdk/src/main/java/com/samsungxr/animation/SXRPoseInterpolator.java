@@ -320,11 +320,7 @@ public class SXRPoseInterpolator extends SXRAnimation
 
     public void getSecondPose(float timer)
     {
-        //float blendFac = 0.5f;
-        // Log.i("printfirstpose","skelanimI "+this.getName()+" "+timer);
-        Log.i("printtimer","inter "+frameTime);
-
-        SXRPose firstPose = skelAnimOne.computePose(skelAnimOne.getDuration()-pDuration+timer+frameTime,skelAnimOne.getSkeleton().getPose());//+0.03f
+        SXRPose firstPose = skelAnimOne.computePose(skelAnimOne.getDuration()-pDuration+timer+frameTime,skelAnimOne.getSkeleton().getPose());
         SXRPose secondPose = skelAnimTwo.computePose(0+timer,skelAnimTwo.getSkeleton().getPose());
 
         float mul = 1/pDuration;
@@ -370,7 +366,7 @@ public class SXRPoseInterpolator extends SXRAnimation
     }
 
     public void animate(float timer) {
-//timer = timer+0.03f;
+
         initialPose = dskeleton.getPose();
 
         Matrix4f temp = new Matrix4f();

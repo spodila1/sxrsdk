@@ -48,8 +48,8 @@ public class SXRAnimator extends SXRBehavior
     protected boolean mAutoStart;
     protected boolean mIsRunning;
     protected String mName;
-    SXRNode animModel= null;
-    SXRAvatar animAvatar = null;
+    SXRNode mModel= null;
+    SXRAvatar mAvatar = null;
     private String          mBoneMap;
     private int numberofInterp = 0;
     /**
@@ -285,10 +285,10 @@ public class SXRAnimator extends SXRBehavior
             anim.setRepeatCount(repeatCount);
         }
     }
-    public void sendAvatar(SXRNode model, SXRAvatar avatar, String bonemap)
+    public void setAvatar(SXRNode model, SXRAvatar avatar, String bonemap)
     {
-        animModel = model;
-        animAvatar = avatar;
+        mModel = model;
+        mAvatar = avatar;
         mBoneMap = bonemap;
     }
     /**
@@ -316,92 +316,66 @@ public class SXRAnimator extends SXRBehavior
             return;
         }
         mIsRunning = true;
-        int tempAnimSze = mAnimations.size();
+        int skelAnimSize = mAnimations.size();
 
-        for(int i=0;i<(tempAnimSze)-2;i=i+2)
+        for(int i=0;i<(skelAnimSize)-2;i=i+2)
         {
-
             SXRSkeletonAnimation skelOne = (SXRSkeletonAnimation)mAnimations.get(i);
-
             SXRSkeletonAnimation skelTwo = (SXRSkeletonAnimation)mAnimations.get(i+2);
-
-            SXRPoseInterpolator blendAnim = new SXRPoseInterpolator(animModel, blendFactor, skelOne, skelTwo, skelOne.getSkeleton());
-
-            SXRPoseMapper retargeterP = new SXRPoseMapper(animAvatar.getSkeleton(), skelOne.getSkeleton(), blendFactor);
-
+            SXRPoseInterpolator blendAnim = new SXRPoseInterpolator(mModel, blendFactor, skelOne, skelTwo, skelOne.getSkeleton());
+            SXRPoseMapper retargeterP = new SXRPoseMapper(mAvatar.getSkeleton(), skelOne.getSkeleton(), blendFactor);
             retargeterP.setBoneMap(mBoneMap);
 
             mAnimations.add(blendAnim);
             mAnimations.add(retargeterP);
             numberofInterp++;
-
         }
 
-        int animSize = mAnimations.size();
-
-        int skelAnimSize = animSize-(numberofInterp*2);
-        int incr = 0;
-        for(int j=0;j<(animSize);j=j+4)
+        int allAnimSize = mAnimations.size();
+        int mAnimSkel = 0;
+        for(int idSkel=0;idSkel<allAnimSize;idSkel=idSkel+4)
         {
-
-            if(j==0)
+            if(idSkel==0)
             {
-                mAnimations.get(j).setID(j);
-
-                mAnimations.get(j+1).setID(j+1);
-
-                SXRSkeletonAnimation skelset = (SXRSkeletonAnimation)mAnimations.get(0);
-                skelset.setblendFactor(blendFactor);
-
-                skelset.setSkelReturn("first");
+                mAnimations.get(mAnimSkel).setID(idSkel);
+                mAnimations.get(mAnimSkel+1).setID(idSkel+1);
+                SXRSkeletonAnimation skel = (SXRSkeletonAnimation)mAnimations.get(0);
+                skel.setSkelOrder("first");
 
             }
             else
             {
-
-                mAnimations.get(incr).setID(j);
-                mAnimations.get(incr+1).setID(j+1);
-
-                SXRSkeletonAnimation skelsetT = (SXRSkeletonAnimation)mAnimations.get(2);
-                skelsetT.setblendFactor(blendFactor);
-
-                if(j!=(animSize-2))
+                mAnimations.get(mAnimSkel).setID(idSkel);
+                mAnimations.get(mAnimSkel+1).setID(idSkel+1);
+                SXRSkeletonAnimation skel = (SXRSkeletonAnimation)mAnimations.get(mAnimSkel);
+                if(idSkel!=(allAnimSize-2))
                 {
-                    skelsetT.setSkelReturn("middle");
+                    skel.setSkelOrder("middle");
                 }
                 else
                 {
-                    skelsetT.setSkelReturn("last");
+                    skel.setSkelOrder("last");
                 }
-
             }
-            incr = incr+2;
+            mAnimSkel = mAnimSkel+2;
         }
-        int mAnim = animSize-(2*numberofInterp);
-        for(int k=0;k<(numberofInterp*4); k=k+4)
+        int mAnimInterp = allAnimSize-(2*numberofInterp);
+        for(int idIntp=0;idIntp<(numberofInterp*4); idIntp=idIntp+4)
         {
-
-            mAnimations.get(mAnim).setID(k+2);
-            mAnimations.get(mAnim+1).setID(k+3);
-            //Log.i("getanimationsID","v "+mAnim+" id "+mAnimations.get(mAnim).getID());
-            mAnimations.get(mAnim).setRepeatMode(SXRRepeatMode.REPEATED);
-            mAnimations.get(mAnim+1).setRepeatMode(SXRRepeatMode.REPEATED);
-
-            mAnimations.get(mAnim).setRepeatCount(-1);
-            mAnimations.get(mAnim+1).setRepeatCount(-1);
-            mAnim = mAnim+2;
-
-
-
+            mAnimations.get(mAnimInterp).setID(idIntp+2);
+            mAnimations.get(mAnimInterp+1).setID(idIntp+3);
+            mAnimations.get(mAnimInterp).setRepeatMode(SXRRepeatMode.REPEATED);
+            mAnimations.get(mAnimInterp+1).setRepeatMode(SXRRepeatMode.REPEATED);
+            mAnimations.get(mAnimInterp).setRepeatCount(-1);
+            mAnimations.get(mAnimInterp+1).setRepeatCount(-1);
+            mAnimInterp = mAnimInterp+2;
         }
 
-        mAnimations.get(0).setSize(mAnimations.size());
-        mAnimations.get(0).setFlag(mAnimations.size());
+        mAnimations.get(0).setFlag(allAnimSize);
 
-        for(int k=0;k<mAnimations.size(); k++) {
-            // Log.i("printnameandID","print "+ mAnimations.get(k).getName()+" id "+ mAnimations.get(k).getID()+" name "+mAnimations.get(k).getClass().getName());
-            mAnimations.get(k).setDur(blendFactor);
-            mAnimations.get(k).start(getSXRContext().getAnimationEngine());
+        for(int j=0;j<allAnimSize; j++) {
+            mAnimations.get(j).setBlendDuration(blendFactor,true);
+            mAnimations.get(j).start(getSXRContext().getAnimationEngine());
         }
 
 

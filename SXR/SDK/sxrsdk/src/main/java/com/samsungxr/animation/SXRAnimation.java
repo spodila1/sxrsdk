@@ -343,27 +343,29 @@ public abstract class SXRAnimation {
         }
         return this;
     }
-    //blendingAnimation//////
+
     private int animId = 0;
-    private float blendDur = 0;
-    public void setSize(int size)
-    {
-        sizeofAnim = size;
-    }
+    private float mBlendDuration = 0;
+    private boolean mBlend = false;
     static boolean[] flagArr;
+    float prevElapsedTime = 0;
+
     public void setID(int id)
     {
         animId = id;
     }
-    public void setDur(float blendT)
+
+    public void setBlendDuration(float blendDuration, boolean blend)
     {
-        blendDur = blendT;
+        mBlendDuration = blendDuration;
+        mBlend = blend;
     }
+
     public int getID()
     {
         return animId;
     }
-    // static boolean[] flagArr;
+
     public void setFlag(int size)
     {
         sizeofAnim = size;
@@ -371,14 +373,12 @@ public abstract class SXRAnimation {
         flagArr[0]=true;
         flagArr[1]=true;
 
-        for(int i=2; i<size; i++)
+        for(int i=2; i<sizeofAnim; i++)
         {
-            // Log.i("printanim","pring"+size);
             flagArr[i] = false;
-
         }
     }
-    //blendingAnimation//////
+
     /**
      * Start the animation.
      *
@@ -432,34 +432,102 @@ public abstract class SXRAnimation {
 
     protected void onRepeat(float frameTime, int count)
     {
-        if(this.getID()%2==0) {
-
-            if((this.getID())!=((sizeofAnim)-2)&&(this.getClass().getName().contains("SXRSkeletonAnimation"))||this.getClass().getName().contains("SXRPoseInterpolator"))
-            {
-                flagArr[this.getID()] = false;
-                flagArr[this.getID()+1] = false;
-                if(this.getClass().getName().contains("SXRPoseInterpolator"))
+        if(mBlend)
+        {
+            if(!this.getClass().getName().contains("SXRPoseMapper")) {
+                if(this.getClass().getName().contains("SXRSkeletonAnimation"))
                 {
+                    getAnimation(this);
+                    if(skeletonAnim.getSkelOrder()!="last")
+                    {
+                        flagArr[this.getID()] = false;
+                        flagArr[this.getID()+1] = false;
+
+                        skeletonAnim.setUpdatePose(false);
+                    }
+                    else {
+                        flagArr[this.getID()] = false;
+                        flagArr[this.getID()+1] = false;
+                        flagArr[0] = true;
+                        flagArr[1] = true;
+                    }
+                }
+                else {
+                    flagArr[this.getID()] = false;
+                    flagArr[this.getID()+1] = false;
                     flagArr[this.getID()-1] = false;
                     flagArr[this.getID()-2] = false;
                 }
-                else
-                {
-                    SXRSkeletonAnimation setTru = (SXRSkeletonAnimation)this;
-                    setTru.setReturn(false);
-                }
-            }
-            else if((this.getID()==((sizeofAnim)-2))&&(this.getClass().getName().contains("SXRSkeletonAnimation")))
-            {
-                flagArr[this.getID()] = false;
-                flagArr[this.getID()+1] = false;
-                flagArr[0] = true;
-                flagArr[1] = true;
+
             }
         }
+
+
         if (sDebug)
         {
             Log.d("ANIMATION", "%s repeated %d", getClass().getSimpleName(), count);
+        }
+    }
+
+    private SXRPoseInterpolator interpolationAnim = null;
+    private SXRSkeletonAnimation skeletonAnim = null;
+    private SXRPoseMapper poseMapperAnim = null;
+
+    public void getAnimation(SXRAnimation anim)
+    {
+        if(anim.getClass().getName().contains("SXRPoseInterpolator"))
+        {
+            interpolationAnim = (SXRPoseInterpolator)this;
+
+        }
+        if(anim.getClass().getName().contains("SXRSkeletonAnimation"))
+        {
+            skeletonAnim = (SXRSkeletonAnimation)this;
+
+        }
+        if(anim.getClass().getName().contains("SXRPoseMapper"))
+        {
+            poseMapperAnim = (SXRPoseMapper)this;
+
+        }
+    }
+    public void updateAnimation(SXRAnimation animation, float prevTime, float currTime, float frameTime)
+    {
+        if(this.getClass().getName().contains("SXRSkeletonAnimation"))
+        {
+            this.getAnimation(animation);
+            if((skeletonAnim.getSkelOrder()!=("last") &&((currTime-prevTime) >= ((this.getDuration())-(mBlendDuration))+(frameTime))))
+            {
+                interpolationAnim.frameTime = frameTime;
+                skeletonAnim.setUpdatePose(true);
+                flagArr[this.getID()+2] = true;
+                flagArr[this.getID()+3] = true;
+                flagArr[this.getID()+4] = true;
+                flagArr[this.getID()+5] = true;
+            }
+            else if(skeletonAnim.getSkelOrder()=="last")
+            {
+                if((0<(currTime-prevTime))&&((currTime-prevTime)<(mBlendDuration)))
+                {
+                    skeletonAnim.setUpdatePose(true);
+                }
+                else
+                {
+                    skeletonAnim.setUpdatePose(false);
+                }
+            }
+            else if(skeletonAnim.getSkelOrder()=="middle")
+            {
+                if((0<(currTime-prevTime))&&((currTime-prevTime)<mBlendDuration)&&((currTime-prevTime)>(this.getDuration()-mBlendDuration)))
+                {
+                    skeletonAnim.setUpdatePose(true);
+                }
+                else
+                {
+                    skeletonAnim.setUpdatePose(false);
+                }
+
+            }
         }
     }
 
@@ -473,69 +541,27 @@ public abstract class SXRAnimation {
      * @return {@code true} to keep running the animation; {@code false} to shut
      *         it down
      */
-    float newElaps = 0;
-    // static boolean[] flagArr;
+
     final boolean onDrawFrame(float frameTime) {
-        SXRPoseInterpolator pose =null;
-        if(this.getClass().getName().contains("SXRPoseInterpolator"))
+        if(mBlend)
         {
-            pose = (SXRPoseInterpolator)this;
-        }
-        if((this.getClass().getName().contains("SXRSkeletonAnimation"))||(this.getClass().getName().contains("SXRPoseInterpolator"))||(this.getClass().getName().contains("SXRPoseMapper")))
-        {
-            if(!flagArr[this.getID()]) {
-                return true;
+            this.getAnimation(this);
+            if(!(this.getClass().getName().contains("SXROpacityAnimation")))
+            {
+                if(!flagArr[this.getID()]) {
+                    return true;
+                }
             }
-        }
-        //  Log.i("callOn","Repeat "+" first "+flagArr[0]+ " inter1 "+flagArr[2]+" sec "+flagArr[4]+" inter2 "+flagArr[6]+" third "+flagArr[8]+" inter3 "+flagArr[10]+" four "+flagArr[12]);
-
-        if(((this.getID())!=((sizeofAnim)-2))&&(this.getClass().getName().contains("SXRSkeletonAnimation")) &&((mElapsedTime-newElaps) >= ((this.getDuration())-(blendDur))+(frameTime)))
-        {
-            pose.frameTime = frameTime;
-            SXRSkeletonAnimation setTru = (SXRSkeletonAnimation)this;
-            setTru.setReturn(true);
-            flagArr[this.getID()+2] = true;
-            flagArr[this.getID()+3] = true;
-            flagArr[this.getID()+4] = true;
-            flagArr[this.getID()+5] = true;
-
-
+            updateAnimation(this,prevElapsedTime,mElapsedTime,frameTime);
         }
 
         final int previousCycleCount = (int) (mElapsedTime / mDuration);
-
         mElapsedTime += (frameTime*animationSpeed);
-        if((this.getClass().getName().contains("SXRSkeletonAnimation")))
+        if(mBlend)
         {
-            SXRSkeletonAnimation last = (SXRSkeletonAnimation)this;
-            if(last.getSkelReturn()=="last")
-            {
-                if((0<(mElapsedTime-newElaps))&&((mElapsedTime-newElaps)<(blendDur)))
-                {
-
-                    last.setReturn(true);
-
-
-                }
-                else
-                {
-                    last.setReturn(false);
-                }
-            }
-            else if(last.getSkelReturn()=="middle")
-            {
-                if((0<(mElapsedTime-newElaps))&&((mElapsedTime-newElaps)<blendDur)&&((mElapsedTime-newElaps)>(this.getDuration()-blendDur)))
-                {
-                    last.setReturn(true);
-                }
-                else
-                {
-                    last.setReturn(false);
-                }
-
-            }
-
+            updateAnimation(this,prevElapsedTime,mElapsedTime,frameTime);
         }
+
         final int currentCycleCount = (int) (mElapsedTime / mDuration);
         final float cycleTime = (mElapsedTime % mDuration)+animationOffset;
 
@@ -550,7 +576,7 @@ public abstract class SXRAnimation {
             } else if (mRepeatCount > 0) {
                 stillRunning = --mRepeatCount > 0;
             } else {
-                newElaps = mElapsedTime;
+                prevElapsedTime = mElapsedTime;
                 onRepeat(frameTime, currentCycleCount);
                 // Negative repeat count - call mOnRepeat, if we can
                 if (mOnRepeat != null) {
@@ -569,14 +595,6 @@ public abstract class SXRAnimation {
                     countDown != true ? interpolate(cycleTime, mDuration)
                             : interpolate(mDuration - cycleTime, mDuration);
 
-            if((this.getClass().getName().contains("SXRSkeletonAnimation"))) {
-                SXRSkeletonAnimation last = (SXRSkeletonAnimation) this;
-
-                if (last.getSkelReturn() == "first") {
-                    Log.i("printLasttime","cycleTime "+((cycleTime))+ " duration "+mDuration+" countDown "+countDown);
-
-                }
-            }
             animate(mTarget, elapsedRatio);
         } else {
             float endRatio = mRepeatMode == SXRRepeatMode.ONCE ? 1f : 0f;
