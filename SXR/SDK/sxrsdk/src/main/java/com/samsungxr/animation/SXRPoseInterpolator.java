@@ -17,6 +17,7 @@ package com.samsungxr.animation;
 
 import com.samsungxr.SXRHybridObject;
 import com.samsungxr.SXRNode;
+import com.samsungxr.SXRPicker;
 import com.samsungxr.animation.keyframe.SXRFloatAnimation;
 import com.samsungxr.animation.keyframe.SXRQuatAnimation;
 import org.joml.Matrix4f;
@@ -31,7 +32,7 @@ public class SXRPoseInterpolator extends SXRAnimation
 {
     private SXRPose initialPose;
     private SXRPose finalPose;
-    private SXRSkeleton pSkeleton;
+   // private SXRSkeleton pSkeleton;
     private Bone[] mBones;
 
     private Vector3f poseOnePos;
@@ -48,7 +49,7 @@ public class SXRPoseInterpolator extends SXRAnimation
     private SXRFloatAnimation mPosInterpolator;
     private SXRFloatAnimation mSclInterpolator;
 
-    private float pDuration;
+    private float mDuration;
     private float[] rotData;
     private float[] posData;
     private float[] sclData;
@@ -73,16 +74,14 @@ public class SXRPoseInterpolator extends SXRAnimation
     private SXRNode modelTarget;
 
     //dynamic update
-    private SXRSkeletonAnimation skelAnimOne;
-    private SXRSkeletonAnimation skelAnimTwo;
-    private SXRSkeleton dskeleton;
-    private SXRPose combinePose;
+    private SXRSkeletonAnimation skelAnimSrc;
+    private SXRSkeletonAnimation skelAnimDest;
+    private SXRSkeleton mSkeleton;
     private float[][] posBlend;
     private float[][] rotBlend;
     private float[][] sclBlend;
-    private int check =0;
     static float frameTime =0;
-
+    private boolean poseBlend = false;
     public SXRPoseInterpolator(SXRNode target, float duration, SXRPose poseOne, SXRPose poseTwo, SXRSkeleton skeleton)
     {
         super(target, duration);
@@ -91,7 +90,7 @@ public class SXRPoseInterpolator extends SXRAnimation
 
         initialPose = poseOne;
         finalPose = poseTwo;
-        pSkeleton = skeleton;
+        mSkeleton = skeleton;
 
         poseOnePos =  new Vector3f(0,0,0);
         poseTwoPos =  new Vector3f(0,0,0);
@@ -122,15 +121,16 @@ public class SXRPoseInterpolator extends SXRAnimation
         endTimeIndex =  4;
         offset = 0;
         poseDataSize = 20;
-        mBones = new Bone[pSkeleton.getNumBones()];
-        poseData = new float[poseDataSize*pSkeleton.getNumBones()];
-        pDuration = duration;
+        mBones = new Bone[mSkeleton.getNumBones()];
+        poseData = new float[poseDataSize*mSkeleton.getNumBones()];
+        mDuration = duration;
 
-        for (int i = 0; i < pSkeleton.getNumBones(); i++)
+        for (int i = 0; i < mSkeleton.getNumBones(); i++)
         {
             poseInterpolate(i);
         }
         mat = new Matrix4f();
+        poseBlend = true;
     }
 
 
@@ -138,89 +138,75 @@ public class SXRPoseInterpolator extends SXRAnimation
 
     public SXRPoseInterpolator(SXRNode target, float duration, SXRSkeletonAnimation skelOne, SXRSkeletonAnimation skelTwo, SXRSkeleton skeleton)
     {
+
         super(target, duration);
-        skelAnimOne = skelOne;
-        skelAnimTwo = skelTwo;
-        dskeleton = skeleton;
+
+        modelTarget = target;
+
+        skelAnimSrc = skelOne;
+        skelAnimDest = skelTwo;
+        mSkeleton = skeleton;
+
+        poseOnePos =  new Vector3f(0,0,0);
+        poseTwoPos =  new Vector3f(0,0,0);
+        poseOneScl =  new Vector3f(0,0,0);
+        poseTwoScl =  new Vector3f(0,0,0);
+        poseOneRot =  new Quaternionf(0,0,0,1);
+        poseTwoRot =  new Quaternionf(0,0,0,1);
+
         rotData = new float[10];
         posData = new float[8];
         sclData = new float[8];
-        posData[0]=0;
-        rotData[0]=0;
-        sclData[0]=0;
+
         posIData = new float[3];
         sclIData = new float[3];
         rotIData = new float[4];
-        mat = new Matrix4f();
-        posBlend = new float[skelAnimOne.getSkeleton().getNumBones()][6];
-        rotBlend = new float[skelAnimOne.getSkeleton().getNumBones()][8];
-        sclBlend = new float[skelAnimOne.getSkeleton().getNumBones()][6];
 
-        SXRPose firstPose = skelAnimOne.computePose(skelAnimOne.getDuration()-pDuration,skelAnimOne.getSkeleton().getPose());
-        SXRPose secondPose = skelAnimTwo.computePose(0,skelAnimTwo.getSkeleton().getPose());
+        posBlend = new float[skelAnimSrc.getSkeleton().getNumBones()][6];
+        rotBlend = new float[skelAnimSrc.getSkeleton().getNumBones()][8];
+        sclBlend = new float[skelAnimSrc.getSkeleton().getNumBones()][6];
 
-        for(int j =0; j<firstPose.getNumBones();j++)
+        tempVec = new Vector3f(0,0,0);
+        tempQuat = new Quaternionf(0,0,0,1);
+        initialPosIndex=0; //initial position index
+        finalPosIndex=10; //final position index
+        initialRotIndex=3; //initial rotation index
+        finalRotIndex=13;  //final rotation index
+        initialSclIndex=7;
+        finalSclIndex=17;
+        startTime = 0;
+        endTime =  duration;
+        startTimeIndex = 0;
+        endTimeIndex =  4;
+        offset = 0;
+        poseDataSize = 20;
+        mBones = new Bone[mSkeleton.getNumBones()];
+        poseData = new float[poseDataSize*mSkeleton.getNumBones()];
+        mDuration = duration;
+
+
+        initialPose = skelAnimSrc.computePose(skelAnimSrc.getDuration()-mDuration,skelAnimSrc.getSkeleton().getPose());
+        finalPose = skelAnimDest.computePose(0,skelAnimDest.getSkeleton().getPose());
+
+
+        for (int i = 0; i < mSkeleton.getNumBones(); i++)
         {
-            Vector3f poss = new Vector3f(0,0,0);
-            firstPose.getLocalPosition(j,poss);
-            Vector3f possT = new Vector3f(0,0,0);
-            secondPose.getLocalPosition(j,possT);
-
-
-            //quaternion
-
-            Quaternionf q1 = new Quaternionf(0,0,0,1);
-            firstPose.getLocalRotation(j,q1);
-            Quaternionf q2 = new Quaternionf(0,0,0,1);
-            secondPose.getLocalRotation(j,q2);
-            //  combinePose.setLocalRotation(j,q1.x,q1.y,q1.z,q1.w);
-
-
-            posBlend[j][0] = poss.x;
-            posBlend[j][1] = poss.y;
-            posBlend[j][2] = poss.z;
-            posBlend[j][3] = possT.x;
-            posBlend[j][4] = possT.y;
-            posBlend[j][5] = possT.z;
-
-            rotBlend[j][0] = q1.x;
-            rotBlend[j][1] = q1.y;
-            rotBlend[j][2] = q1.z;
-            rotBlend[j][3] = q1.w;
-            rotBlend[j][4] = q2.x;
-            rotBlend[j][5] = q2.y;
-            rotBlend[j][6] = q2.z;
-            rotBlend[j][7] = q2.w;
-
-
-            Vector3f scl = new Vector3f(0,0,0);
-            firstPose.getLocalScale(j,scl);
-            Vector3f sclT = new Vector3f(0,0,0);
-            secondPose.getLocalScale(j,sclT);
-
-            sclBlend[j][0] = scl.x;
-            sclBlend[j][1] = scl.y;
-            sclBlend[j][2] = scl.z;
-            sclBlend[j][3] = sclT.x;
-            sclBlend[j][4] = sclT.y;
-            sclBlend[j][5] = sclT.z;
-
-
+            poseInterpolate(i);
         }
-        pDuration = duration;
 
+        mat = new Matrix4f();
 
     }
 
     public void poseInterpolate(int index)
     {
-        setPosePositions(index);
-        setPoseRotations(index);
-        setPoseScale(index);
+        setPosePositions(index, initialPose, finalPose);
+        setPoseRotations(index, initialPose, finalPose);
+        setPoseScale(index, initialPose, finalPose);
     }
 
 
-    private void setPosePositions(int index)
+    private void setPosePositions(int index, SXRPose initialPose, SXRPose finalPose)
     {
         initialPose.getLocalPosition(index,poseOnePos);
         finalPose.getLocalPosition(index,poseTwoPos);
@@ -238,7 +224,7 @@ public class SXRPoseInterpolator extends SXRAnimation
         poseData[posOffset+2]=posePos.z();
     }
 
-    private void setPoseRotations(int index)
+    private void setPoseRotations(int index, SXRPose initialPose, SXRPose finalPose)
     {
         initialPose.getLocalRotation(index,poseOneRot);
         finalPose.getLocalRotation(index,poseTwoRot);
@@ -255,7 +241,7 @@ public class SXRPoseInterpolator extends SXRAnimation
         poseData[rotOffset+3]=poseRot.w();
     }
 
-    private void setPoseScale(int index)
+    private void setPoseScale(int index, SXRPose initialPose, SXRPose finalPose)
     {
         initialPose.getLocalScale(index,poseOneScl);
         finalPose.getLocalScale(index,poseTwoScl);
@@ -272,7 +258,7 @@ public class SXRPoseInterpolator extends SXRAnimation
         poseData[sclOffset+2]=poseScl.z();
     }
 
-    public void updatePos(int offset)
+    public void updatePos(int offset, float startTime, float endTime)
     {
         posData[startTimeIndex] = startTime;
         posData[endTimeIndex] = endTime;
@@ -287,7 +273,7 @@ public class SXRPoseInterpolator extends SXRAnimation
         posData[pos+2] = poseData[posOffset+2];
     }
 
-    public void updateRot(int offset)
+    public void updateRot(int offset, float startTime, float endTime)
     {
         rotData[startTimeIndex] = startTime;
         rotData[endTimeIndex+1] = endTime;
@@ -303,7 +289,7 @@ public class SXRPoseInterpolator extends SXRAnimation
         rotData[rot+3] = poseData[rotOffset+3];
     }
 
-    public void updateScl(int offset)
+    public void updateScl(int offset, float startTime, float endTime)
     {
         sclData[startTimeIndex] = startTime;
         sclData[endTimeIndex] = endTime;
@@ -318,127 +304,93 @@ public class SXRPoseInterpolator extends SXRAnimation
         sclData[scl+2] = poseData[sclOffset+2];
     }
 
-    public void getSecondPose(float timer)
+    public void getFinalPose(float timer)
     {
-        SXRPose firstPose = skelAnimOne.computePose(skelAnimOne.getDuration()-pDuration+timer+frameTime,skelAnimOne.getSkeleton().getPose());
-        SXRPose secondPose = skelAnimTwo.computePose(0+timer,skelAnimTwo.getSkeleton().getPose());
 
-        float mul = 1/pDuration;
+        SXRPose firstPose = skelAnimSrc.computePose(skelAnimSrc.getDuration()-mDuration+timer+frameTime,skelAnimSrc.getSkeleton().getPose());
+        SXRPose secondPose = skelAnimDest.computePose(0+timer,skelAnimDest.getSkeleton().getPose());
+
+        float mul = 1/mDuration;
 
 
-        for(int j =0; j<skelAnimOne.getSkeleton().getNumBones();j++)
+        for(int k =0; k<skelAnimSrc.getSkeleton().getNumBones();k++)
         {
             Vector3f poss = new Vector3f(0,0,0);
-            firstPose.getLocalPosition(j,poss);
+            firstPose.getLocalPosition(k,poss);
             Vector3f possT = new Vector3f(0,0,0);
-            secondPose.getLocalPosition(j,possT);
+            secondPose.getLocalPosition(k,possT);
 
-            posBlend[j][3] = ((pDuration-timer)*mul*poss.x)+(possT.x*(timer*mul));
-            posBlend[j][4] = ((pDuration-timer)*mul*poss.y)+(possT.y*timer*mul);
-            posBlend[j][5] = ((pDuration-timer)*mul*poss.z)+(possT.z*timer*mul);
+            posBlend[k][3] = ((mDuration-timer)*mul*poss.x)+(possT.x*(timer*mul));
+            posBlend[k][4] = ((mDuration-timer)*mul*poss.y)+(possT.y*timer*mul);
+            posBlend[k][5] = ((mDuration-timer)*mul*poss.z)+(possT.z*timer*mul);
+
+            finalPose.setLocalPosition(k,posBlend[k][3],  posBlend[k][4],  posBlend[k][5]);
 
             Quaternionf q1 = new Quaternionf(0,0,0,1);
-            firstPose.getLocalRotation(j,q1);
+            firstPose.getLocalRotation(k,q1);
             Quaternionf q2 = new Quaternionf(0,0,0,1);
-            secondPose.getLocalRotation(j,q2);
+            secondPose.getLocalRotation(k,q2);
 
-            rotBlend[j][4] = ((pDuration-timer)*mul*q1.x)+(q2.x*timer*mul);
-            rotBlend[j][5] = ((pDuration-timer)*mul*q1.y)+(q2.y*timer*mul);
-            rotBlend[j][6] = ((pDuration-timer)*mul*q1.z)+(q2.z*timer*mul);
-            rotBlend[j][7] = ((pDuration-timer)*mul*q1.w)+(q2.w*timer*mul);
+            rotBlend[k][4] = ((mDuration-timer)*mul*q1.x)+(q2.x*timer*mul);
+            rotBlend[k][5] = ((mDuration-timer)*mul*q1.y)+(q2.y*timer*mul);
+            rotBlend[k][6] = ((mDuration-timer)*mul*q1.z)+(q2.z*timer*mul);
+            rotBlend[k][7] = ((mDuration-timer)*mul*q1.w)+(q2.w*timer*mul);
 
-
-            Vector3f scl = new Vector3f(0,0,0);
-            firstPose.getLocalScale(j,scl);
-            Vector3f sclT = new Vector3f(0,0,0);
-            secondPose.getLocalScale(j,sclT);
-
-            sclBlend[j][3] = ((pDuration-timer)*mul*scl.x)+(sclT.x*timer*mul);
-            sclBlend[j][4] = ((pDuration-timer)*mul*scl.y)+(sclT.y*timer*mul);
-            sclBlend[j][5] = ((pDuration-timer)*mul*scl.z)+(sclT.z*timer*mul);
-
+            finalPose.setLocalRotation(k,rotBlend[k][4],  rotBlend[k][5],  rotBlend[k][6],  rotBlend[k][7]);
 
         }
+
     }
     protected void animate(SXRHybridObject target, float ratio)
     {
-        animate(pDuration * ratio);
+        animate(mDuration * ratio);
     }
 
     public void animate(float timer) {
 
-        initialPose = dskeleton.getPose();
-
-        Matrix4f temp = new Matrix4f();
-        SXRSkeleton skel = dskeleton;
-
-        posData[4]=timer;
-        sclData[4]=timer;
-        rotData[5]=timer;
-
-        getSecondPose(timer);
-
-        for (int i = 0; i < dskeleton.getNumBones(); ++i)
+        initialPose = mSkeleton.getPose();
+        if(!poseBlend)
         {
-            posData[1]= posBlend[i][0];
-            posData[2]= posBlend[i][1];
-            posData[3]= posBlend[i][2];
-            posData[5]= posBlend[i][3];
-            posData[6]= posBlend[i][4];
-            posData[7]= posBlend[i][5];
+            endTime=timer;
+            getFinalPose(timer);
+        }
 
+        for(int  i= 0;i < mSkeleton.getNumBones();i++)
+        {
+            offset = i*poseDataSize;
 
-            rotData[1]= rotBlend[i][0];
-            rotData[2]= rotBlend[i][1];
-            rotData[3]= rotBlend[i][2];
-            rotData[4]= rotBlend[i][3];
-            rotData[6]= rotBlend[i][4];
-            rotData[7]= rotBlend[i][5];
-            rotData[8]= rotBlend[i][6];
-            rotData[9]= rotBlend[i][7];
+            setPosePositions(i, initialPose, finalPose);
+            setPoseRotations(i,initialPose, finalPose);
+            setPoseScale(i,initialPose, finalPose);
 
-            sclData[1]= sclBlend[i][0];
-            sclData[2]= sclBlend[i][1];
-            sclData[3]= sclBlend[i][2];
-            sclData[5]= sclBlend[i][3];
-            sclData[6]= sclBlend[i][4];
-            sclData[7]= sclBlend[i][5];
+            updatePos(offset, startTime, endTime);
+            updateRot(offset, startTime, endTime);
+            updateScl(offset, startTime, endTime);
 
             mPosInterpolator = new SXRFloatAnimation(posData, 4);
             mRotInterpolator = new SXRQuatAnimation(rotData);
             mSclInterpolator = new SXRFloatAnimation(sclData, 4);
+
             mPosInterpolator.animate(timer,posIData);
             mRotInterpolator.animate(timer,rotIData);
             mSclInterpolator.animate(timer,sclIData);
+
             mat.translationRotateScale(posIData[0], posIData[1], posIData[2],rotIData[0], rotIData[1], rotIData[2], rotIData[3],sclIData[0], sclIData[1], sclIData[2]);
             initialPose.setLocalMatrix(i, mat);
 
-            posBlend[i][0] = posIData[0];
-            posBlend[i][1] = posIData[1];
-            posBlend[i][2] = posIData[2];
-
-            rotBlend[i][0] = rotIData[0];
-            rotBlend[i][1] = rotIData[1];
-            rotBlend[i][2] = rotIData[2];
-            rotBlend[i][3] = rotIData[3];
-
-            sclBlend[i][0] = sclIData[0];
-            sclBlend[i][1] = sclIData[1];
-            sclBlend[i][2] = sclIData[2];
 
         }
+        mSkeleton.poseToBones();
+        mSkeleton.updateBonePose();
+        mSkeleton.updateSkinPose();
 
-        dskeleton.poseToBones();
-        dskeleton.updateBonePose();
-        dskeleton.updateSkinPose();
-        posData[0]=timer;
-        rotData[0]=timer;
-        sclData[0] = timer;
-        check++;
+        if(!poseBlend)
+        {
+            startTime=timer;
+        }
 
 
     }
-
 
 
 }
