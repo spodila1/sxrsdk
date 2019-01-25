@@ -21,7 +21,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import com.samsungxr.SXRContext;
 import com.samsungxr.SXRDrawFrameListener;
 import com.samsungxr.SXRNode;
-import com.samsungxr.utility.Log;
 
 /**
  * This class runs {@linkplain SXRAnimation animations}.
@@ -49,7 +48,6 @@ import com.samsungxr.utility.Log;
 public class SXRAnimationEngine {
 
     private static SXRAnimationEngine sInstance = null;
-    private int count =0;
 
     static {
         SXRContext.addResetOnRestartHandler(new Runnable() {

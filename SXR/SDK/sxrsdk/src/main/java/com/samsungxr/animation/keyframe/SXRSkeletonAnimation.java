@@ -19,7 +19,6 @@ import com.samsungxr.PrettyPrint;
 import com.samsungxr.SXRHybridObject;
 import com.samsungxr.SXRNode;
 import com.samsungxr.animation.SXRAnimation;
-import com.samsungxr.animation.SXRAnimator;
 import com.samsungxr.animation.SXRPose;
 import com.samsungxr.animation.SXRSkeleton;
 import com.samsungxr.utility.Log;
@@ -52,7 +51,6 @@ import java.util.List;
 public class SXRSkeletonAnimation extends SXRAnimation implements PrettyPrint {
     protected String mName;
     private SXRSkeleton mSkeleton = null;
-
 
     /**
      * List of animation channels for each of the
