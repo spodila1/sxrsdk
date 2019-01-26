@@ -187,43 +187,44 @@ public class SXRAvatar extends SXRBehavior implements IEventReceiver
             {
                 case 2:
                 mAvatarRoot.getSXRContext().getEventManager().sendEvent(SXRAvatar.this,
-                                                                              IAvatarEvents.class,
-                                                                    "onAnimationFinished",
-                                                                      SXRAvatar.this,
-                                                                              animator,
-                                                                              animation);
+                            IAvatarEvents.class,
+                            "onAnimationFinished",
+                            SXRAvatar.this,
+                            animator,
+                            animation);
                 mAvatarRoot.getSXRContext().getEventManager().sendEvent(SXRAvatar.this,
-                                                                              IAvatarEvents.class,
-                                                                    "onAnimationStarted",
-                                                                      SXRAvatar.this,
-                                                                              animator);
+                            IAvatarEvents.class,
+                            "onAnimationStarted",
+                            SXRAvatar.this,
+                            animator);
+
                 break;
 
                 case 1:
                 mAvatarRoot.getSXRContext().getEventManager().sendEvent(SXRAvatar.this,
-                                                                              IAvatarEvents.class,
-                                                                    "onAnimationStarted",
-                                                                      SXRAvatar.this,
-                                                                              animator);
+                            IAvatarEvents.class,
+                            "onAnimationStarted",
+                            SXRAvatar.this,
+                            animator);
 
                 //REPEATED
                 if (mRepeatMode == SXRRepeatMode.REPEATED)
                 {
-                    repeatCounter++;
-                    if(repeatCounter < mRepeatCount || mRepeatCount < 0){
-                       startAll(mRepeatMode, mRepeatCount);
-                    }
+                   repeatCounter++;
+                   if(repeatCounter < mRepeatCount || mRepeatCount < 0){
+                      startAll(mRepeatMode, mRepeatCount);
+                   }
                 }
 
                 //PINGPONG
                 if (mRepeatMode == SXRRepeatMode.PINGPONG)
                 {
-                   if(!dummyAnimation)
-                     {
+                    if(!dummyAnimation)
+                    {
                        playDummyAnimation(animator); //play dummy animation till stillRunning (SXRAnimation) set to false for the last animation
-                     }
-                   else
-                     {
+                    }
+                    else
+                    {
                        repeatCounter = repeatCounter + 0.5f ; //increment in halves for PINGPONG
 
                        if(repeatCounter < mRepeatCount || mRepeatCount<0) {
@@ -231,9 +232,10 @@ public class SXRAvatar extends SXRBehavior implements IEventReceiver
                           setRepeatModeAndCount();
                           startAll(mRepeatMode, mRepeatCount);
                        }
-                            dummyAnimation =false;
-                     }
+                       dummyAnimation =false;
+                    }
                 }
+
                 default: break;
             }
         }
@@ -427,22 +429,22 @@ public class SXRAvatar extends SXRBehavior implements IEventReceiver
                 }
                 addAnimation(animator);
                 ctx.getEventManager().sendEvent(this,
-                                                      IAvatarEvents.class,
-                                            "onAnimationLoaded",
-                                              SXRAvatar.this,
-                                                      animator,
-                                                      filePath,
-                                                      null);
+                        IAvatarEvents.class,
+                        "onAnimationLoaded",
+                        SXRAvatar.this,
+                        animator,
+                        filePath,
+                        null);
             }
             catch (IOException ex)
             {
                 ctx.getEventManager().sendEvent(this,
-                                                      IAvatarEvents.class,
-                                            "onAnimationLoaded",
-                                              SXRAvatar.this,
-                                                      null,
-                                                      filePath,
-                                                      ex.getMessage());
+                        IAvatarEvents.class,
+                        "onAnimationLoaded",
+                        SXRAvatar.this,
+                        null,
+                        filePath,
+                        ex.getMessage());
             }
         }
         else

@@ -24,7 +24,6 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 import static com.samsungxr.animation.SXRPose.Bone;
 import com.samsungxr.animation.keyframe.SXRSkeletonAnimation;
-import com.samsungxr.utility.Log;
 
 /**
  * Interpolate the poses or blend the skeleton animations.
@@ -82,8 +81,8 @@ public class SXRPoseInterpolator extends SXRAnimation
 
     private float startTime;
     private float endTime;
-    private int startTimeIndex = 0;
-    private int endTimeIndex =  4;
+    private int startTimeIndex = 0; //initial time index for position, rotation and scale data
+    private int endTimeIndex =  4;  //final time index for position and scale data
     private int offset = 0;
     private Matrix4f mat;
     private float mDuration;

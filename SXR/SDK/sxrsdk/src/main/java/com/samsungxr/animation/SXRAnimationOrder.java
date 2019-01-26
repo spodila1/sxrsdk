@@ -9,10 +9,7 @@ package com.samsungxr.animation;
 public enum SXRAnimationOrder {
 
         FIRST,
-
         MIDDLE,
-
         LAST,
-
         INTER;
 }
