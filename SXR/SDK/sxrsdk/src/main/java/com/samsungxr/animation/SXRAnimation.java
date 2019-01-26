@@ -112,7 +112,6 @@ public abstract class SXRAnimation {
     protected boolean mBlend = false;
     protected SXRAnimationOrder mOrderName = null;
 
-
     /**
      * This is derived from {@link #mOnFinish}. Doing the {@code instanceof}
      * test in {@link #setOnFinish(SXROnFinish)} means we <em>don't</em> have to
@@ -123,8 +122,9 @@ public abstract class SXRAnimation {
     // Running state
     protected float mElapsedTime = 0f;
     protected int mIterations = 0;
-    protected boolean isFinished = false;
     protected boolean mReverse = false;
+
+    protected boolean isFinished = false;
 
     /**
      * Base constructor.
@@ -270,7 +270,7 @@ public abstract class SXRAnimation {
             throw new IllegalArgumentException("offset should not be either negative or greater than duration");
         }
         mAnimationOffset = startOffset;
-        mDuration =  mDuration-mAnimationOffset;
+        mDuration =  mDuration - mAnimationOffset;
         return this;
     }
     /**
@@ -345,7 +345,6 @@ public abstract class SXRAnimation {
         }
         return this;
     }
-
     /**
      * Sets the reverse flag either true or false.
      * @param reverse true to play animation backwards or vice versa.
@@ -355,7 +354,7 @@ public abstract class SXRAnimation {
         mReverse = reverse;
     }
 
-   /**
+    /**
      * Sets the blend and blend duration.
      * @param blend true to apply blend; false no blend.
      * @param blendDuration duration of blend.
@@ -445,7 +444,6 @@ public abstract class SXRAnimation {
         }
     }
 
-
     /**
      * Called by the animation engine. Uses the frame time, the interpolator,
      * and the repeat mode to generate a call to
@@ -461,7 +459,7 @@ public abstract class SXRAnimation {
 
         final int previousCycleCount = (int) (mElapsedTime / mDuration);
 
-        mElapsedTime += (frameTime*mAnimationSpeed);
+        mElapsedTime += (frameTime * mAnimationSpeed);
 
         final int currentCycleCount = (int) (mElapsedTime / mDuration);
         final float cycleTime = (mElapsedTime % mDuration) + mAnimationOffset;

@@ -23,7 +23,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-
 /**
  * Group of animations that can be collectively manipulated.
  *
@@ -295,7 +294,7 @@ public class SXRAvatar extends SXRBehavior implements IEventReceiver
      * @param duration duration of pose animation
      * @param position add pose animation to the given position in mAnimQueue
      */
-    public void addPoseAnimation(SXRAnimator animator, float duration, int position)
+    private void addPoseAnimation(SXRAnimator animator, float duration, int position)
     {
         SXRSkeletonAnimation skelAnim = (SXRSkeletonAnimation)animator.getAnimation(0);
         SXRPose poseOne = ((SXRSkeletonAnimation) animator.getAnimation(0)).getSkeleton().getPose();
