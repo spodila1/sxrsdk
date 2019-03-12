@@ -35,14 +35,7 @@ import java.util.jar.Attributes;
 
 
 /**
- * Group of animations that can be collectively manipulated.
- *
- * Typically the animations belong to a particular model and
- * represent a sequence of poses for the model over time.
- * This class allows you to start, stop and set animation modes
- * for all the animations in the group at once.
- * An asset which has animations will have this component
- * attached to collect the animations for the asset.
+ * Articulated character and associated animations.
  *
  * @see com.samsungxr.SXRAssetLoader
  * @see com.samsungxr.SXRExternalScene
@@ -841,7 +834,7 @@ public class SXRAvatar extends SXRBehavior
                 }
                 else
                 {
-                    errors += "  vatar skeleton not found";
+                    errors += "Avatar skeleton not found";
                     Log.e(TAG, "Avatar skeleton not found in asset file " + filePath);
                 }
             }

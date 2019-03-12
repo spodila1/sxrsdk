@@ -244,7 +244,7 @@ public class SXRSkeletonAnimation extends SXRAnimation implements PrettyPrint {
     }
 
     public SXRPose computePose(float timeInSec, SXRPose pose)
-    {
+    { 
         Matrix4f temp = new Matrix4f();
         SXRSkeleton skel = getSkeleton();
         Vector3f rootOffset = skel.getRootOffset();
