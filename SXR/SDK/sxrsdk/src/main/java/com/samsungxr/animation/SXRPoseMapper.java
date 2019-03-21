@@ -1,6 +1,6 @@
 package com.samsungxr.animation;
 
-import com.samsungxr.SXRHybridObject;
+
 import com.samsungxr.SXRVertexBuffer;
 import com.samsungxr.utility.Log;
 import org.joml.Matrix4f;

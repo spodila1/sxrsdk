@@ -43,6 +43,7 @@ import java.util.jar.Attributes;
  * @see SXRAnimationEngine
  */
 
+
 public class SXRAvatar extends SXRBehavior
     implements IEventReceiver, SXRAnimationQueue.IAnimationQueueEvents
 {
@@ -294,8 +295,8 @@ public class SXRAvatar extends SXRBehavior
                                                              animator);
     }
 
-    public SXRAnimation addBlendAnimation(SXRAnimationQueue queue, SXRAnimator dst, SXRAnimator src, float duration)
 
+    public SXRAnimation addBlendAnimation(SXRAnimationQueue queue, SXRAnimator dst, SXRAnimator src, float duration)
     {
         SXRSkeletonAnimation skelOne = (SXRSkeletonAnimation) src.getAnimation(0);
         SXRSkeletonAnimation skelTwo = (SXRSkeletonAnimation) dst.getAnimation(0);;
@@ -305,7 +306,7 @@ public class SXRAvatar extends SXRBehavior
             SXRAnimation anim = src.getAnimation(i);
             if (anim instanceof SXRPoseMapper)
             {
-                SXRAnimationEngine.getInstance(mContext).stop(anim);
+                SXRAnimationEngine.getInstance(dst.getSXRContext()).stop(anim);
             }
         }
         for (int i = 0; i < dst.getAnimationCount(); ++i)
@@ -335,6 +336,7 @@ public class SXRAvatar extends SXRBehavior
         for (int i = 0; i < a.getAnimationCount(); ++i)
         {
             SXRAnimation anim = a.getAnimation(i);
+
             if (anim instanceof SXRPoseInterpolator)
             {
                 a.removeAnimation(anim);
@@ -367,6 +369,7 @@ public class SXRAvatar extends SXRBehavior
             }
         }
     }
+
     protected Attachment addAttachment(String name)
     {
         Attachment a = mAttachments.get(name);
@@ -556,7 +559,6 @@ public class SXRAvatar extends SXRBehavior
      */
     public void loadAnimation(SXRAndroidResource animResource, String boneMap)
     {
-        mBoneMap = boneMap;
         String filePath = animResource.getResourcePath();
         SXRContext ctx = mAvatarRoot.getSXRContext();
         SXRResourceVolume volume = new SXRResourceVolume(ctx, animResource);
@@ -730,13 +732,23 @@ public class SXRAvatar extends SXRBehavior
      */
     public float centerModel(SXRNode model, Vector3f pos)
     {
-        SXRNode.BoundingVolume bv = model.getBoundingVolume();
-        float sf = 1 / bv.radius;
-        bv = model.getBoundingVolume();
-        pos.x -= bv.center.x;
-        pos.y -= bv.center.y;
-        pos.z -= bv.center.z;
-        return sf;
+        if (mSkeleton != null)
+        {
+            Vector3f center = new Vector3f();
+            float r = mSkeleton.getCenter(center);
+            pos.x -= center.x;
+            pos.y -= center.y;
+            pos.z -= center.z;
+            return r;
+        }
+        else
+        {
+            SXRNode.BoundingVolume bv = model.getBoundingVolume();
+            pos.x -= bv.center.x;
+            pos.y -= bv.center.y;
+            pos.z -= bv.center.z;
+            return bv.radius;
+        }
     }
 
     protected Attachment mergeSkeleton(SXRSkeleton skel, SXRNode modelRoot)
@@ -759,7 +771,10 @@ public class SXRAvatar extends SXRBehavior
             SXRSkin skin = (SXRSkin) c;
             skin.setSkeleton(mSkeleton);
         }
-        mAvatarRoot.addChildObject(modelRoot);
+        if (modelRoot.getParent() == null)
+        {
+            mAvatarRoot.addChildObject(modelRoot);
+        }
         return a;
     }
 
@@ -806,11 +821,7 @@ public class SXRAvatar extends SXRBehavior
         {
             String eventName = "onModelLoaded";
 
-            if ((errors != null) && !errors.isEmpty())
-            {
-                Log.e(TAG, "Asset load errors: " + errors);
-            }
-            else
+            if (modelRoot != null)
             {
                 List<SXRComponent> skeletons = modelRoot.getAllComponents(SXRSkeleton.getComponentType());
 

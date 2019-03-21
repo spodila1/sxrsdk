@@ -15,7 +15,11 @@ before_install:
   - yes | sdkmanager --licenses
 =======
 #  - yes | sdkmanager --licenses
+<<<<<<< HEAD
 >>>>>>> f1aee862439623d41aa8aea8f6e591eef5f03320
+=======
+
+>>>>>>> 61880eaced9e9f0721b4df7b4e64ca22d47592d0
   # newest Android NDK
   - wget https://dl.google.com/android/repository/android-ndk-r18b-linux-x86_64.zip -O ndk.zip
   - unzip ndk.zip  > /dev/null 2>&1

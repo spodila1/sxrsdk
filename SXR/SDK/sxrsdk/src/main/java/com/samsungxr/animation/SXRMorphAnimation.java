@@ -55,8 +55,7 @@ public final class SXRMorphAnimation extends SXRAnimation implements PrettyPrint
     public void animate(float timeInSec)
     {
         SXRMeshMorph morph  = (SXRMeshMorph) mTarget;
-
-        mKeyInterpolator.animate(timeInSec * mDuration, mCurrentValues);
+        mKeyInterpolator.animate(timeInSec, mCurrentValues);
         morph.setWeights(mCurrentValues);
 
     }
