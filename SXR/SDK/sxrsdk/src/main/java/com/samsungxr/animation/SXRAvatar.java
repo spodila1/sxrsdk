@@ -157,7 +157,7 @@ public class SXRAvatar extends SXRBehavior
 
         protected void parseModelDescription(JSONObject root) throws JSONException
         {
-            for (String propName : new String[] { "type", "attachbone", "model", "bonemap" })
+            for (String propName : new String[] { "name", "type", "attachbone", "model", "bonemap" })
             {
                 if (root.has(propName))
                 {
@@ -459,7 +459,7 @@ public class SXRAvatar extends SXRBehavior
      * @param modelName  name of model to remove.
      * @see #loadModel(SXRAndroidResource)
      */
-    public void removeModel(String modelName)
+    public boolean removeModel(String modelName)
     {
         Attachment a = mAttachments.get(modelName);
         if (a != null)
@@ -471,7 +471,9 @@ public class SXRAvatar extends SXRBehavior
                 mAvatarRoot.removeChildObject(root);
             }
             mAttachments.remove(modelName);
+            return true;
         }
+        return false;
     }
 
     protected Attachment findModel(SXRNode modelRoot)
@@ -715,13 +717,24 @@ public class SXRAvatar extends SXRBehavior
     }
 
     /**
-     * Stops all of the animations associated with this animator.
+     * Stops the named animation.
+     * @param name  name of animation to stop.
      * @see SXRAvatar#start(String)
      * @see SXRAnimationEngine#stop(SXRAnimation)
      */
     public void stop(String name)
     {
         mAnimsToPlay.stop(name);
+    }
+
+    /**
+     * Stops all of the animations associated with this animator.
+     * @see SXRAvatar#startAll()
+     * @see SXRAnimationEngine#stop(SXRAnimation)
+     */
+    public void stop()
+    {
+        mAnimsToPlay.stop();
     }
 
     /**
@@ -785,6 +798,10 @@ public class SXRAvatar extends SXRBehavior
         if (a.getProperty("model") == null)
         {
             a.setProperty("model", filePath);
+        }
+        if (a.getProperty("name") != null)
+        {
+            mAvatarRoot.setName(a.getProperty("name"));
         }
         mSkeleton = skel;
         mSkeleton.poseFromBones();
